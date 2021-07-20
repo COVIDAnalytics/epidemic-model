@@ -658,27 +658,27 @@ if __name__ == "__main__":
             df_initial_states = df_initial_states[df_initial_states.country != 'US']
     elif TYPE_RUNNING == "US":
         df_initial_states = df_initial_states[df_initial_states.country == 'US']
-        #df_initial_states =  df_initial_states[df_initial_states['province'].str.contains("AK")]
+        df_initial_states =  df_initial_states[~df_initial_states['province'].str.contains("NE")]
     elif TYPE_RUNNING == VACCINE_MODEL:
         df_initial_states = df_initial_states[df_initial_states['country'].isin(["US"])]
     n_days_to_train = (training_end_date - training_start_date).days
-    prov = df_initial_states.province.values
-    stat =  [x.split('_')[0] for x in prov]
-    allStats = np.unique(stat)
-    print(allStats)
+    # prov = df_initial_states.province.values
+    # stat =  [x.split('_')[0] for x in prov]
+    # allStats = np.unique(stat)
+    # print(allStats)
     
-    for s in allStats:
-        if s == 'NE':
-            continue;
-        print(f"state {s}")
-        df_initial_states_p = df_initial_states[df_initial_states['province'].str.contains(s)]
+    # for s in allStats:
+    #     if s == 'NE':
+    #         continue;
+    #     print(f"state {s}")
+    #     df_initial_states_p = df_initial_states[df_initial_states['province'].str.contains(s)]
 
-        for n_days_after in range(min(1,n_days_to_train), max(n_days_to_train+1 ,1)):
-            if n_days_after == n_days_to_train:
-               OPTIMIZER = "annealing"
-            current_time = training_start_date +  timedelta(days=n_days_after)
-            run_model_eachday(current_time,OPTIMIZER, popcountries, df_initial_states_p)
+    for n_days_after in range(min(1,n_days_to_train), max(n_days_to_train+1 ,1)):
+        if n_days_after == n_days_to_train:
+           OPTIMIZER = "annealing"
+        current_time = training_start_date +  timedelta(days=n_days_after)
+        run_model_eachday(current_time,OPTIMIZER, popcountries, df_initial_states)
 
-        upload_to_s3 = False
-       #run_model_V4_with_policies(current_time_str,PATH_TO_FOLDER_DANGER_MAP, PATH_TO_DATA_SANDBOX, training_end_date,upload_to_s3,TYPE_RUNNING,OPTIMIZER,popcountries,df_initial_states_p,logging,GLOBAL_JJ,run7days_before)
+    upload_to_s3 = True
+    run_model_V4_with_policies(current_time_str,PATH_TO_FOLDER_DANGER_MAP, PATH_TO_DATA_SANDBOX, training_end_date,upload_to_s3,TYPE_RUNNING,OPTIMIZER,popcountries,df_initial_states,logging,GLOBAL_JJ,run7days_before)
     
