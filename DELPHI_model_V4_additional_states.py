@@ -638,7 +638,7 @@ if __name__ == "__main__":
             PATH_TO_DATA_SANDBOX + f"processed/Population_Global.csv"
         )
         last_date_c = runProcessData(INPUT_DATE,logging, TYPE_RUNNING,GLOBAL_JJ)
-        training_start_date = last_date_c - timedelta(days=10) # get_start_date(last_date_c,PATH_TO_FOLDER_DANGER_MAP,PATH_TO_DATA_SANDBOX,OPTIMIZER,TYPE_RUNNING)
+        training_start_date = last_date_c - timedelta(days=5) # get_start_date(last_date_c,PATH_TO_FOLDER_DANGER_MAP,PATH_TO_DATA_SANDBOX,OPTIMIZER,TYPE_RUNNING)
         training_end_date = datetime.now() - timedelta(days=8) if run7days_before == 'true' else last_date_c
         prev_param_file = PATH_TO_DATA_SANDBOX + f"predicted/raw_predictions/Predicted_model_provinces_V3_{fitting_start_date}.csv"
 
@@ -658,15 +658,27 @@ if __name__ == "__main__":
             df_initial_states = df_initial_states[df_initial_states.country != 'US']
     elif TYPE_RUNNING == "US":
         df_initial_states = df_initial_states[df_initial_states.country == 'US']
+        #df_initial_states =  df_initial_states[df_initial_states['province'].str.contains("AK")]
     elif TYPE_RUNNING == VACCINE_MODEL:
         df_initial_states = df_initial_states[df_initial_states['country'].isin(["US"])]
     n_days_to_train = (training_end_date - training_start_date).days
-    for n_days_after in range(min(1,n_days_to_train), max(n_days_to_train + 1,1)):
-        if n_days_after == n_days_to_train:
-            OPTIMIZER = "annealing"
-        current_time = training_start_date +  timedelta(days=n_days_after)
-        run_model_eachday(current_time,OPTIMIZER, popcountries, df_initial_states)
+    prov = df_initial_states.province.values
+    stat =  [x.split('_')[0] for x in prov]
+    allStats = np.unique(stat)
+    print(allStats)
+    
+    for s in allStats:
+        if s == 'NE':
+            continue;
+        print(f"state {s}")
+        df_initial_states_p = df_initial_states[df_initial_states['province'].str.contains(s)]
 
-    upload_to_s3 = True
-    run_model_V4_with_policies(current_time_str,PATH_TO_FOLDER_DANGER_MAP, PATH_TO_DATA_SANDBOX, training_end_date,upload_to_s3,TYPE_RUNNING,
-                               OPTIMIZER,popcountries,df_initial_states,logging,GLOBAL_JJ,run7days_before)
+        for n_days_after in range(min(1,n_days_to_train), max(n_days_to_train+1 ,1)):
+            if n_days_after == n_days_to_train:
+               OPTIMIZER = "annealing"
+            current_time = training_start_date +  timedelta(days=n_days_after)
+            run_model_eachday(current_time,OPTIMIZER, popcountries, df_initial_states_p)
+
+        upload_to_s3 = False
+       #run_model_V4_with_policies(current_time_str,PATH_TO_FOLDER_DANGER_MAP, PATH_TO_DATA_SANDBOX, training_end_date,upload_to_s3,TYPE_RUNNING,OPTIMIZER,popcountries,df_initial_states_p,logging,GLOBAL_JJ,run7days_before)
+    
